@@ -17,7 +17,7 @@ Meu Home Assistant não opera isoladamente. Ele está hospedado em um servidor D
 
 O diagrama abaixo ilustra como o Home Assistant e outros serviços são acessados de forma segura:
 
-graph TD
+    graph TD
     subgraph "External Access (Internet)"
         User_External["External User"]
     end
