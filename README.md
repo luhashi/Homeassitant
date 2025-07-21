@@ -1,203 +1,354 @@
-🧠 Home Assistant: O Cérebro do Meu Homelab
-Este repositório documenta a configuração do meu Home Assistant, que atua como o orquestrador central e a interface de controle para toda a minha casa e meu homelab. Este projeto é uma peça fundamental na minha jornada de transição de carreira de videomaker para Engenheiro de IA e DevOps.
+# 🧠 Home Assistant: O Cérebro do Meu Homelab
 
-🎯 Filosofia
-Vindo de um background de 10 anos no audiovisual, acredito em construir soluções que unem criatividade e eficiência técnica. Esta configuração do Home Assistant segue os mesmos princípios do meu homelab:
+<div align="center">
 
-Prática: Resolve problemas do dia a dia, desde controlar luzes até gerenciar regras complexas de firewall.
+![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2023.12-blue?style=for-the-badge&logo=homeassistant)
+![Docker](https://img.shields.io/badge/Docker-20.10+-blue?style=for-the-badge&logo=docker)
+![Proxmox](https://img.shields.io/badge/Proxmox-VE-orange?style=for-the-badge&logo=proxmox)
 
-Evolutiva: Está em constante aprimoramento, com novas automações e integrações sendo adicionadas regularmente.
+*O orquestrador central e interface de controle para toda a minha casa e homelab*
 
-Documentada: A documentação clara é a base de um projeto sustentável e escalável.
+**Uma peça fundamental na minha jornada de transição de carreira:**  
+*Videomaker → Engenheiro de IA & DevOps*
 
-Segura: Opera dentro de uma arquitetura de rede Zero Trust, garantindo que a automação não comprometa a segurança.
+</div>
 
-🏛️ Contexto da Arquitetura
-Meu Home Assistant não opera isoladamente. Ele está hospedado em um servidor Debian de baixo consumo e é parte integrante de um homelab mais amplo, gerenciado com Proxmox, Docker e Portainer. A segurança é um pilar central, com acesso externo e interno governado por princípios de Zero Trust.
+---
 
-O diagrama abaixo ilustra como o Home Assistant e outros serviços são acessados de forma segura:
+## 🎯 **Filosofia do Projeto**
 
-    graph TD
-    subgraph "External Access (Internet)"
-        User_External["External User"]
+> *"Construindo soluções que unem criatividade e eficiência técnica"*
+
+Com 10 anos de experiência no audiovisual, aplico os mesmos princípios criativos na construção desta infraestrutura inteligente:
+
+| 🎯 **Prática** | 🔄 **Evolutiva** | 📚 **Documentada** | 🔒 **Segura** |
+|----------------|------------------|---------------------|----------------|
+| Resolve problemas do dia a dia | Aprimoramento contínuo | Base sustentável | Arquitetura Zero Trust |
+| Controle de luzes a firewall | Novas automações regulares | Escalabilidade garantida | Segurança não negociável |
+
+---
+
+## 🏛️ **Arquitetura & Contexto**
+
+### **Stack Tecnológico**
+- **Host:** Servidor Debian baixo consumo
+- **Virtualização:** Proxmox VE
+- **Containers:** Docker + Portainer
+- **Segurança:** Zero Trust Network Access
+
+### **Diagrama de Acesso Seguro**
+
+```mermaid
+graph TD
+    subgraph "🌍 External Access (Internet)"
+        User_External["👤 External User"]
     end
 
-    subgraph "Cloudflare"
-        CF_Proxy["Proxy (CDN/WAF)"]
-        CF_Access["Access (SSO Login)"]
-        CF_Tunnel["Tunnel"]
+    subgraph "☁️ Cloudflare"
+        CF_Proxy["🛡️ Proxy (CDN/WAF)"]
+        CF_Access["🔐 Access (SSO Login)"]
+        CF_Tunnel["🚇 Tunnel"]
     end
 
-    subgraph "Local Network (Homelab)"
-        subgraph "VM: vm-docker-network"
-            Cloudflared["cloudflared (Tunnel Agent)"]
-            NPM["Nginx Proxy Manager"]
-            AdGuard["AdGuard Home (Internal DNS)"]
+    subgraph "🏠 Local Network (Homelab)"
+        subgraph "📦 VM: vm-docker-network"
+            Cloudflared["☁️ cloudflared (Tunnel Agent)"]
+            NPM["🔀 Nginx Proxy Manager"]
+            AdGuard["🛡️ AdGuard Home (Internal DNS)"]
         end
 
-        subgraph "Internal Services"
-            HA["Home Assistant"]
-            OpenWebUI["OpenWebUI / LittleLLM"]
-            UnifiCtrl["UniFi Controller"]
-            OtherServices["...other services"]
+        subgraph "⚙️ Internal Services"
+            HA["🏠 Home Assistant"]
+            OpenWebUI["🤖 OpenWebUI / LittleLLM"]
+            UnifiCtrl["📡 UniFi Controller"]
+            OtherServices["📋 ...other services"]
         end
 
-        User_Internal["Internal User / VPN Client"]
+        User_Internal["👤 Internal User / VPN Client"]
     end
 
-    User_External -- "1. [https://service.example.com](https://service.example.com)" --> CF_Proxy
-    CF_Proxy -- "2. Filters Threats (WAF)" --> CF_Access
-    CF_Access -- "3. Forces SSO Login" --> CF_Tunnel
-    CF_Tunnel -- "4. Secure Bridge (No Open Ports)" --> Cloudflared
-    Cloudflared -- "5. Forwards ALL traffic to NPM" --> NPM
+    User_External -->|"1. https://service.example.com"| CF_Proxy
+    CF_Proxy -->|"2. Filters Threats (WAF)"| CF_Access
+    CF_Access -->|"3. Forces SSO Login"| CF_Tunnel
+    CF_Tunnel -->|"4. Secure Bridge (No Open Ports)"| Cloudflared
+    Cloudflared -->|"5. Forwards ALL traffic to NPM"| NPM
 
-    User_Internal -- "[https://service.lab.example.com](https://service.lab.example.com)" --> AdGuard
-    AdGuard -- "Replies with NPM's internal IP" --> User_Internal
-    User_Internal -- "Accesses NPM directly" --> NPM
+    User_Internal -->|"https://service.lab.example.com"| AdGuard
+    AdGuard -->|"Replies with NPM's internal IP"| User_Internal
+    User_Internal -->|"Accesses NPM directly"| NPM
 
-    NPM -- "Routes to correct service" --> HA
-    NPM -- "Routes to correct service" --> OpenWebUI
-    NPM -- "Routes to correct service" --> UnifiCtrl
-    NPM -- "Routes to correct service" --> OtherServices
+    NPM --> HA
+    NPM --> OpenWebUI
+    NPM --> UnifiCtrl
+    NPM --> OtherServices
+```
 
-dashboards em destaque
-Criei dashboards específicos para diferentes necessidades, focando em impacto visual e eficiência. Os dois principais são o Hub Central e a Central de Controle de Rede.
+---
 
-1. 🏠 Home - O Hub Central de Controle
+## 📊 **Dashboards em Destaque**
 
-Este é o dashboard principal para o dia a dia. Ele oferece controle intuitivo e rápido sobre todos os dispositivos IoT da casa, mídia e informações contextuais importantes.
+### 🏠 **Home - O Hub Central de Controle**
 
-Principais Funcionalidades:
+<div align="center">
 
-Controle de Iluminação: Gerenciamento centralizado de luzes inteligentes, incluindo produtos comerciais (Yeelight, Philips Hue) e projetos DIY como uma fita de LED endereçável (WS2812B) controlada por um ESP32 com firmware WLED. A automação é enriquecida por uma rede Zigbee dedicada, onde sensores de presença e interruptores sem fio controlam luzes e acionam cenas com baixa latência.
+*Dashboard principal para o dia a dia*  
+**Controle intuitivo e rápido sobre todos os dispositivos IoT**
 
-Gerenciamento de Mídia: Controle unificado de players como Amazon Echo, Google Home e Spotify, além do controle de energia da TV Samsung.
+</div>
 
-Monitoramento de Dispositivos Pessoais: Cards que exibem o nível de bateria do iPhone, Apple Watch e MacBook.
+#### **🔥 Principais Funcionalidades:**
 
-Informações Ambientais: Exibição da previsão do tempo e dos horários do nascer e do pôr do sol.
+<table>
+<tr>
+<td width="50%">
 
-2. 🌐 Network & Security - A Central de Controle de Rede
+**💡 Controle de Iluminação**
+- Luzes inteligentes (Yeelight, Philips Hue)
+- Projetos DIY (ESP32 + WLED + WS2812B)
+- Rede Zigbee dedicada
+- Sensores de presença + baixa latência
 
-Esta é uma Central de Operações de Rede (NOC) construída inteiramente no Home Assistant, que proporciona visibilidade e controle granular sobre toda a infraestrutura de rede UniFi e serviços de segurança como o AdGuard.
+**🎵 Gerenciamento de Mídia**
+- Amazon Echo, Google Home, Spotify
+- Controle de energia TV Samsung
+- Controle unificado de players
 
-Principais Funcionalidades:
+</td>
+<td width="50%">
 
-Monitoramento de Infraestrutura UniFi: Status em tempo real, uptime, uso de CPU e memória do Gateway Lite e do Access Point U7 Lite, com botões para reinicialização remota.
+**📱 Monitoramento Pessoal**
+- Nível de bateria iPhone
+- Status Apple Watch
+- Status MacBook
+- Cards informativos em tempo real
 
-Gerenciamento Dinâmico de Wi-Fi: Permite ativar ou desativar redes Wi-Fi segmentadas (Toca da Cacau, Toca da Sayuri, Toca do Mochi para convidados) e exibe um QR Code para acesso fácil.
+**🌤️ Informações Ambientais**
+- Previsão do tempo
+- Horários nascer/pôr do sol
+- Contexto ambiental
 
-Controle do AdGuard Home: Visão geral das estatísticas de bloqueio e switches para gerenciar os módulos de proteção.
+</td>
+</tr>
+</table>
 
-Gerenciamento de Regras de Firewall: Switches que ativam/desativam dinamicamente regras no firewall da UniFi, como a que permite a comunicação do Home Assistant com a VLAN de IoT.
+### 🌐 **Network & Security - Central de Controle**
 
-⚡ Automações em Destaque
-O verdadeiro poder desta configuração está nas automações que conectam diferentes sistemas para criar uma experiência verdadeiramente inteligente e proativa.
+<div align="center">
 
-🛒 Lista de Compras Inteligente
+*NOC (Network Operations Center) completo no Home Assistant*  
+**Visibilidade e controle granular da infraestrutura**
 
-Uma lista de compras compartilhada entre mim e minha noiva permite que ambos adicionemos itens a qualquer momento. O Home Assistant possui as zonas dos principais supermercados que frequentamos configuradas. Ao detectar que cheguei em um desses locais, ele proativamente envia uma notificação para o meu celular com a lista de compras completa, garantindo que nada seja esquecido.
+</div>
 
-🎬 Modo Foco de Trabalho (Work Mode)
+#### **🚀 Principais Funcionalidades:**
 
-Com um único clique em um botão Zigbee no meu escritório, a cena "Work Mode" é acionada. Graças à integração com o HomeKit, esta mesma cena pode ser ativada por voz com a Siri ou diretamente do meu Apple Watch. A automação executa o seguinte:
+| 📡 **Infraestrutura UniFi** | 📶 **Wi-Fi Dinâmico** | 🛡️ **AdGuard Control** | 🔥 **Firewall Rules** |
+|----------------------------|----------------------|------------------------|---------------------|
+| Status tempo real | Redes segmentadas | Estatísticas bloqueio | Switches dinâmicos |
+| Uptime, CPU, Memória | QR Code para acesso | Módulos proteção | Regras HA ↔ IoT VLAN |
+| Reinicialização remota | Toca da Cacau/Sayuri/Mochi | Controle granular | Gestão automatizada |
 
-As três lâmpadas do ambiente são ajustadas para uma iluminação ideal para trabalho.
+---
 
-Meu celular entra automaticamente no modo "Foco".
+## ⚡ **Automações em Destaque**
 
-Minha playlist de trabalho do Spotify começa a tocar no alto-falante do escritório.
+### 🛒 **Lista de Compras Inteligente**
 
-Bônus de Videomaker: Se a minha câmera principal for ligada (detectada pela rede), a automação pausa a música imediatamente para evitar problemas com a captação de áudio.
+```yaml
+# Fluxo da Automação
+Adição de Item → Lista Compartilhada → Detecção de Localização → Notificação Proativa
+```
 
-🚀 Alerta de Commit (DevOps)
+**Como funciona:**
+- Lista compartilhada entre casal
+- Zonas de supermercados configuradas
+- Detecção automática de chegada
+- Notificação com lista completa
 
-Integrado ao meu fluxo de trabalho de desenvolvimento, o Home Assistant me notifica de forma visual e sonora sempre que um membro da equipe faz um commit em um dos repositórios que gerencio. Uma notificação é enviada para o meu celular e a luz da minha mesa pisca, servindo como um alerta periférico e imediato.
+---
 
-🏠 Modo Ausente Automático
+### 🎬 **Modo Foco de Trabalho (Work Mode)**
 
-Utilizando a geolocalização de nossos celulares como um sensor de presença combinado, o sistema detecta quando tanto eu quanto minha noiva estamos fora de casa. Nesse momento, ele executa uma rotina de "desligamento", garantindo que todas as luzes e dispositivos desnecessários sejam desligados para economizar energia.
+<div align="center">
 
-☕ Bom Dia Personalizado (Em desenvolvimento)
+**Um clique. Múltiplas ações. Produtividade máxima.**
 
-Esta é a próxima automação a ser implementada. Ao ligar a máquina de café pela manhã (a primeira coisa que faço no dia), um sensor de consumo de energia detectará o pico e, combinado com o horário, entenderá que eu acordei. A Alexa, posicionada ao lado da máquina, me dará um "bom dia" personalizado com um resumo da minha agenda, a previsão do tempo e as principais notícias do dia, filtradas por hashtags de interesse.
+</div>
 
-🤖 AI Hub: Integrando Inteligência Artificial
-Além do controle e monitoramento, transformei meu Home Assistant em um assistente de IA híbrido. Utilizo o LittleLLM como um proxy unificado para conectar o Home Assistant tanto a modelos de linguagem rodando localmente via Ollama quanto a provedores na nuvem como Gemini e Groq.
+#### **Triggers Disponíveis:**
+- 🔘 Botão Zigbee no escritório
+- 🗣️ Comando de voz via Siri
+- ⌚ Apple Watch (HomeKit)
 
-O fluxo de comunicação é o seguinte:
-Home Assistant <--> Extended OpenAI <--> LittleLLM <--> (Ollama [Local] OU Gemini/Groq [Nuvem])
+#### **Ações Executadas:**
+```mermaid
+graph LR
+    A[👆 Ativação] --> B[💡 Luz Trabalho]
+    A --> C[📱 Modo Foco ON]
+    A --> D[🎵 Playlist Spotify]
+    A --> E[📷 Pausa se Câmera ON]
+```
 
-🛠️ Implementação Técnica
-A mágica acontece através da combinação de integrações poderosas e da configuração declarativa dos dashboards com Lovelace UI.
+---
 
-Key Integrations
+### 🚀 **Alerta de Commit (DevOps)**
 
-A funcionalidade deste projeto é possível graças a um conjunto de integrações essenciais, agrupadas por função:
+**Integração com fluxo de desenvolvimento:**
+- 📧 Notificação mobile instantânea
+- 💡 Pisca luz da mesa (alerta periférico)
+- 🔔 Feedback visual + sonoro
+- 👥 Monitora commits da equipe
 
-Infraestrutura e Rede:
+---
 
-UniFi Network: Para controle e monitoramento profundo da infraestrutura de rede.
+### 🏠 **Modo Ausente Automático**
 
-AdGuard Home: Para gerenciamento do bloqueador de DNS.
+**Geolocalização combinada do casal:**
+- 📍 Detecção saída simultânea
+- 💡 Desliga luzes automaticamente
+- ⚡ Otimização consumo energia
+- 🔒 Rotina segurança ativada
 
-Proxmox VE: Para monitorar o status das VMs e do host.
+---
 
-Protocolos IoT:
+### ☕ **Bom Dia Personalizado** `[EM DESENVOLVIMENTO]`
 
-Zigbee: Rede de baixa latência para sensores (presença, porta/janela) e interruptores, gerenciada via ZHA ou Zigbee2MQTT.
+<div align="center">
 
-MQTT: Broker para comunicação desacoplada entre dispositivos IoT e integrações customizadas.
+**Próxima automação a ser implementada**
 
-Ecossistema e Interoperabilidade:
+</div>
 
-HomeKit Bridge: Expõe todos os dispositivos relevantes (Zigbee, WLED, Wi-Fi) para o ecossistema Apple, permitindo controle via app Casa, Siri e Apple Watch.
+#### **Fluxo Planejado:**
+```mermaid
+sequenceDiagram
+    participant C as ☕ Máquina Café
+    participant S as 📊 Sensor Energia
+    participant A as 🤖 Alexa
+    participant U as 👤 Usuário
+    
+    U->>C: Liga máquina (primeira ação do dia)
+    C->>S: Pico consumo detectado
+    S->>A: Trigger + horário matinal
+    A->>U: "Bom dia!" + resumo personalizado
+    
+    Note over A,U: Agenda + Clima + Notícias filtradas
+```
 
-Google Assistant / Alexa: Integração com assistentes de voz para comandos e automações.
+---
 
-Inteligência Artificial:
+## 🤖 **AI Hub: Inteligência Artificial Integrada**
 
-LittleLLM: Atua como um proxy unificado para LLMs.
+<div align="center">
 
-Ollama: Permite a execução de modelos de linguagem locais.
+**Assistente de IA híbrido: Local + Nuvem**
 
-Extended OpenAI Conversation: Integração que conecta o HA ao proxy LittleLLM.
+</div>
 
-Controle e Dados:
+### **Arquitetura de IA:**
 
-Iluminação Inteligente: Yeelight, Philips Hue e WLED para controle de produtos comerciais e fitas de LED customizadas com ESP32.
+```mermaid
+graph LR
+    HA[🏠 Home Assistant] <--> EO[🔗 Extended OpenAI]
+    EO <--> LL[🔄 LittleLLM Proxy]
+    LL <--> O[🖥️ Ollama Local]
+    LL <--> G[☁️ Gemini/Groq Cloud]
+```
 
-Mídia: Spotify, Broadlink, SmartThings.
+**Benefícios:**
+- 🏠 **Modelos Locais:** Privacidade total via Ollama
+- ☁️ **Modelos Cloud:** Poder computacional avançado
+- 🔄 **Proxy Unificado:** Interface única para múltiplos LLMs
+- 🎯 **Flexibilidade Total:** Melhor modelo para cada tarefa
 
-Sensores: Home Assistant Mobile App para dados de dispositivos móveis.
+---
 
-Manutenção e Operações:
+## 🛠️ **Implementação Técnica**
 
-Google Drive Backup: Add-on que realiza backups automáticos e os envia para a nuvem, garantindo a recuperação de desastres.
-
-RESTful Sensors: Sensores customizados para monitorar o status de outros serviços do homelab.
-
-🛡️ Backup e Recuperação de Desastres
-
-Para garantir a resiliência de todo o sistema, implementei uma estratégia de backup automatizada utilizando o add-on "Home Assistant Google Drive Backup". Esta é uma peça crítica da infraestrutura, protegendo contra falhas de hardware e corrupção de dados.
-
-Automação Completa: Snapshots completos do Home Assistant são criados automaticamente em uma programação regular.
-
-Armazenamento Off-site: Imediatamente após a criação, os snapshots são enviados para uma pasta dedicada no Google Drive, garantindo que os backups estejam seguros fora do hardware local.
-
-Retenção Inteligente: O sistema gerencia automaticamente o número de backups a serem mantidos, tanto localmente quanto na nuvem, otimizando o espaço de armazenamento.
-
-Monitoramento de Serviços Self-Hosted
-
-Para garantir a saúde do ecossistema, utilizo a plataforma RESTful do Home Assistant para criar sensores binários que monitoram o status dos principais serviços do meu homelab. Isso permite criar alertas e ter uma visão rápida da saúde da infraestrutura diretamente nos dashboards.
+### **🔌 Integrações Essenciais**
 
 <details>
-<summary>Clique para expandir e ver o código configuration.yaml</summary>
+<summary><strong>📡 Infraestrutura e Rede</strong></summary>
 
-# Exemplo de configuração no configuration.yaml para monitorar serviços
+- **UniFi Network** - Controle e monitoramento profissional
+- **AdGuard Home** - Gerenciamento DNS e bloqueios
+- **Proxmox VE** - Status VMs e host
+
+</details>
+
+<details>
+<summary><strong>🌐 Protocolos IoT</strong></summary>
+
+- **Zigbee** - Rede baixa latência (ZHA/Zigbee2MQTT)
+- **MQTT** - Broker para comunicação desacoplada
+
+</details>
+
+<details>
+<summary><strong>🏠 Ecossistema e Interoperabilidade</strong></summary>
+
+- **HomeKit Bridge** - Integração completa Apple
+- **Google Assistant / Alexa** - Controle por voz
+
+</details>
+
+<details>
+<summary><strong>🤖 Inteligência Artificial</strong></summary>
+
+- **LittleLLM** - Proxy unificado para LLMs
+- **Ollama** - Modelos de linguagem locais
+- **Extended OpenAI Conversation** - Integração HA
+
+</details>
+
+<details>
+<summary><strong>💡 Controle e Dados</strong></summary>
+
+- **Iluminação:** Yeelight, Philips Hue, WLED (ESP32)
+- **Mídia:** Spotify, Broadlink, SmartThings
+- **Sensores:** Mobile App + dados dispositivos
+
+</details>
+
+<details>
+<summary><strong>🛡️ Manutenção e Operações</strong></summary>
+
+- **Google Drive Backup** - Backups automáticos nuvem
+- **RESTful Sensors** - Monitoramento serviços homelab
+
+</details>
+
+---
+
+## 🛡️ **Backup e Recuperação de Desastres**
+
+<div align="center">
+
+**Estratégia de backup automatizada e resiliente**
+
+</div>
+
+### **Características do Sistema:**
+
+| 🤖 **Automação** | ☁️ **Off-site** | 🔄 **Retenção** | 📊 **Monitoramento** |
+|------------------|-----------------|------------------|---------------------|
+| Snapshots regulares | Google Drive | Gestão automática | Status nos dashboards |
+| Zero intervenção | Seguro fora do hardware | Otimização espaço | Alertas falhas |
+
+---
+
+## 📊 **Monitoramento de Serviços**
+
+**Sensores RESTful para saúde da infraestrutura:**
+
+<details>
+<summary><strong>📝 Exemplo de Configuração (configuration.yaml)</strong></summary>
+
+```yaml
+# Monitoramento de serviços self-hosted
 rest:
-  # Nginx Proxy Manager - Verifica se a página de login está acessível
-  - resource: [http://192.168.1.39:81/](http://192.168.1.39:81/)
+  # Nginx Proxy Manager - Status página login
+  - resource: http://192.168.1.39:81/
     timeout: 10
     scan_interval: 60
     headers:
@@ -207,8 +358,8 @@ rest:
         icon: mdi:gate-arrow-right
         value_template: "{{ 'html' in value }}"
 
-  # Portainer - Verifica o endpoint de status da API
-  - resource: [http://192.168.1.232:3010/api/status](http://192.168.1.232:3010/api/status)
+  # Portainer - Status API endpoint
+  - resource: http://192.168.1.232:3010/api/status
     timeout: 10
     scan_interval: 60
     headers:
@@ -217,21 +368,44 @@ rest:
       - name: "Portainer Status"
         icon: mdi:docker
         value_template: "{{ value_json.status == 'UP' }}"
+```
 
 </details>
 
-Código dos Dashboards (Lovelace YAML)
+---
 
-O código YAML que estrutura os dashboards está disponível no repositório, utilizando vertical-stack, horizontal-stack e grid para uma organização eficiente.
+## 🗺️ **Roadmap - Próximos Passos**
 
-🗺️ Próximos Passos
-A automação é uma jornada, não um destino. Os próximos passos para este projeto incluem:
+<div align="center">
 
-[x] Bom Dia Personalizado: Finalizar a implementação da automação de café.
+*"A automação é uma jornada, não um destino"*
 
-[ ] Dashboards de Energia: Implementar monitoramento de consumo de energia para otimizar o uso e identificar gargalos.
+</div>
 
-[ ] Componentes Customizados: Desenvolver meus próprios componentes em Python para integrações que não existem nativamente, como monitoramento de progresso de render de vídeo.
+### **Em Progresso:**
+- [x] 🎯 **Bom Dia Personalizado** - Finalizar automação café
 
-Obrigado pela visita! Sinta-se à vontade para explorar o repositório.
+### **Planejado:**
+- [ ] ⚡ **Dashboards de Energia** - Monitoramento consumo + otimização
+- [ ] 🔧 **Componentes Custom** - Desenvolvimentos Python próprios
+- [ ] 📹 **Monitor Render Vídeo** - Integração com background videomaker
 
+---
+
+<div align="center">
+
+## 🙏 **Obrigado pela Visita!**
+
+*Sinta-se à vontade para explorar o repositório e contribuir com ideias.*
+
+**Conecte-se comigo:**
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=for-the-badge&logo=linkedin)](https://linkedin.com)
+[![GitHub](https://img.shields.io/badge/GitHub-Follow-black?style=for-the-badge&logo=github)](https://github.com)
+
+---
+
+**⭐ Se este projeto foi útil, considere dar uma estrela!**
+
+*Construído com ❤️ e muito ☕ por um videomaker em transição para DevOps/AI*
+
+</div>
